@@ -1,0 +1,40 @@
+
+
+body {
+    background-color: #f8f9fa; /* Gris muy suave de fondo */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Hacemos que el footer siempre se quede abajo */
+footer {
+    margin-top: auto;
+    background-color: #2c3e50;
+    color: white;
+    padding: 1rem 0;
+}
+
+/* Mejoramos las tarjetas de productos/servicios */
+.card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+/* Estilo para los precios */
+.price-tag {
+    font-size: 1.25rem;
+    color: #0d6efd;
+    font-weight: bold;
+}
