@@ -1,4 +1,3 @@
-// const API_URL = 'http://localhost:8000/backend_ordenes.php';
 const API_URL = '../../backend_ordenes.php';
 let pedidos = [];
 let pedidosFiltrados = [];
