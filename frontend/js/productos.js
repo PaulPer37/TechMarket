@@ -7,8 +7,20 @@ let todosLosProductos = []; // Guardamos copia local para filtrar sin recargar l
 
 async function cargarProductos() {
     try {
-        const res = await fetch('../../backend_productos.php');
+        // RUTA CORREGIDA: Apunta a la carpeta backend
+        const res = await fetch('../../backend/backend_productos.php');
+        
+        if (!res.ok) throw new Error('Error en la respuesta del servidor');
+        
         todosLosProductos = await res.json();
+        
+        // Verificamos si vino un error desde PHP
+        if (todosLosProductos.error) {
+            console.error("Error del backend:", todosLosProductos.error);
+            alert("Error de conexión con la base de datos");
+            return;
+        }
+
         renderizarProductos(todosLosProductos);
     } catch (error) {
         console.error("Error cargando productos:", error);
@@ -20,7 +32,7 @@ function renderizarProductos(lista) {
     const mensaje = document.getElementById('mensaje-no-resultados');
     contenedor.innerHTML = '';
 
-    if (lista.length === 0) {
+    if (!lista || lista.length === 0) {
         mensaje.classList.remove('d-none');
         return;
     } else {
@@ -28,9 +40,9 @@ function renderizarProductos(lista) {
     }
 
     lista.forEach(p => {
-        // IMAGEN: Como la base de datos no tiene campo de imagen, usamos una genérica
-        // o una imagen aleatoria de tecnología basada en la categoría
-        const imagenPlaceholder = `https://source.unsplash.com/300x200/?${p.categoria || 'technology'}`;
+        // Usamos imagen genérica si no hay URL
+        const categoria = p.categoria || 'technology';
+        const imagenPlaceholder = `https://source.unsplash.com/300x200/?${categoria}`;
         
         contenedor.innerHTML += `
             <div class="col-md-4 mb-4">
@@ -66,13 +78,13 @@ function configurarFiltros() {
     const labelPrecio = document.getElementById('precio-valor');
     const btnLimpiar = document.getElementById('btn-limpiar');
 
-    // Función que aplica todos los filtros a la vez
+    if(!inputBusqueda) return; // Evitar errores si no estamos en la página correcta
+
     const aplicarFiltros = () => {
         const texto = inputBusqueda.value.toLowerCase();
         const categoria = selectCategoria.value;
         const precioMax = parseFloat(inputPrecio.value);
 
-        // Actualizar etiqueta del slider
         labelPrecio.innerText = precioMax;
 
         const filtrados = todosLosProductos.filter(p => {
@@ -87,12 +99,10 @@ function configurarFiltros() {
         renderizarProductos(filtrados);
     };
 
-    // Escuchar eventos
     inputBusqueda.addEventListener('input', aplicarFiltros);
     selectCategoria.addEventListener('change', aplicarFiltros);
     inputPrecio.addEventListener('input', aplicarFiltros);
 
-    // Botón limpiar
     btnLimpiar.addEventListener('click', () => {
         inputBusqueda.value = '';
         selectCategoria.value = '';
@@ -102,37 +112,62 @@ function configurarFiltros() {
 }
 
 // Lógica del Formulario de Registro (POST)
-document.getElementById('form-producto').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const nuevoProducto = {
-        nombre: document.getElementById('nombre').value,
-        descripcion: document.getElementById('desc').value,
-        precio: document.getElementById('precio').value,
-        stock: document.getElementById('stock').value,
-        categoria: document.getElementById('cat').value
-    };
+const formProducto = document.getElementById('form-producto');
+if (formProducto) {
+    formProducto.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const nuevoProducto = {
+            nombre: document.getElementById('nombre').value,
+            descripcion: document.getElementById('desc').value,
+            precio: document.getElementById('precio').value,
+            stock: document.getElementById('stock').value,
+            categoria: document.getElementById('cat').value
+        };
 
-    const res = await fetch('../../backend_productos.php', {
-        method: 'POST',
-        body: JSON.stringify(nuevoProducto),
-        headers: {'Content-Type': 'application/json'}
+        try {
+            // RUTA CORREGIDA
+            const res = await fetch('../../backend/backend_productos.php', {
+                method: 'POST',
+                body: JSON.stringify(nuevoProducto),
+                headers: {'Content-Type': 'application/json'}
+            });
+
+            if(res.ok) {
+                const data = await res.json();
+                if(data.error) throw new Error(data.error);
+
+                alert('Producto registrado exitosamente');
+                
+                // Cerrar modal y limpiar
+                const modalElement = document.getElementById('modalProducto');
+                const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                modalInstance.hide();
+                document.getElementById('form-producto').reset();
+                
+                cargarProductos(); // Recargar lista
+            } else {
+                throw new Error('Error en la petición al servidor');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error al registrar: ' + error.message);
+        }
     });
+}
 
-    if(res.ok) {
-        alert('Producto registrado exitosamente');
-        // Cerrar modal manualmente
-        const modalElement = document.getElementById('modalProducto');
-        const modalInstance = bootstrap.Modal.getInstance(modalElement);
-        modalInstance.hide();
-        document.getElementById('form-producto').reset();
-        cargarProductos(); // Recargar lista
-    }
-});
-
-// Función auxiliar para el carrito (debe estar disponible globalmente)
+// Función auxiliar para el carrito
 function agregarAlCarrito(id, nombre, precio) {
     let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-    carrito.push({ id, nombre, precio, tipo: 'producto' });
+    // Verificamos si ya existe para aumentar cantidad
+    const existente = carrito.find(item => item.id === id && item.tipo === 'producto');
+    
+    if (existente) {
+        existente.cantidad++;
+    } else {
+        carrito.push({ id, nombre, precio: parseFloat(precio), tipo: 'producto', cantidad: 1, stock: 10 }); // Stock temporal
+    }
+    
     localStorage.setItem('carrito', JSON.stringify(carrito));
     alert('Producto agregado al carrito');
 }

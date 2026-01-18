@@ -1,4 +1,4 @@
-const API_URL = '../../backend_ordenes.php';
+const API_URL = '../../backend/backend_ordenes.php';
 let carrito = [];
 
 document.addEventListener('DOMContentLoaded', () => {

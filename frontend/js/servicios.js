@@ -9,7 +9,7 @@ document.getElementById('form-servicio').addEventListener('submit', async (e) =>
         horario_atencion: document.getElementById('horario').value
     };
 
-    await fetch('../../backend_servicios.php', {
+    await fetch('../../backend/backend_servicios.php', {
         method: 'POST',
         body: JSON.stringify(servicio)
     });
@@ -18,7 +18,7 @@ document.getElementById('form-servicio').addEventListener('submit', async (e) =>
 });
 
 async function cargarServicios() {
-    const res = await fetch('../../backend_servicios.php');
+    const res = await fetch('../../backend/backend_servicios.php');
     const servicios = await res.json();
     const div = document.getElementById('lista-servicios');
     div.innerHTML = '';
